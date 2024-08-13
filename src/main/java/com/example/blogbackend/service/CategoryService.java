@@ -67,4 +67,8 @@ public class CategoryService {
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
+
+    public Category findById(Long id) {
+        return categoryRepository.findById(id).orElseThrow();
+    }
 }

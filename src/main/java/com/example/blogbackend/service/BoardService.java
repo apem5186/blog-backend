@@ -97,8 +97,6 @@ public class BoardService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        BoardEntity savedBoard = boardRepository.save(boardEntity);
-        log.info("-----------------------\n{}\n------------------------", savedBoard.getIdx());
         return boardRepository.save(boardEntity);
     }
 
@@ -144,5 +142,9 @@ public class BoardService {
      */
     public String getTotalBoards() {
         return String.valueOf(boardRepository.countTotalBoards());
+    }
+
+    public BoardEntity findById(Long id) {
+        return boardRepository.findById(id).orElseThrow(BoardNotFoundException::new);
     }
 }

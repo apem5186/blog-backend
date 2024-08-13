@@ -35,7 +35,9 @@ public class TokenRequestFilter extends OncePerRequestFilter {
             new AntPathRequestMatcher("/user/save", RequestMethod.POST),
             new AntPathRequestMatcher("/board/**", RequestMethod.GET),
             new AntPathRequestMatcher("/total-boards", RequestMethod.GET),
-            new AntPathRequestMatcher("/board-count-by-category", RequestMethod.GET)
+            new AntPathRequestMatcher("/board-count-by-category", RequestMethod.GET),
+            new AntPathRequestMatcher("/comment", RequestMethod.POST),
+            new AntPathRequestMatcher("/comment/**", RequestMethod.GET)
     );
 
     @Override

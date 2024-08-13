@@ -12,7 +12,7 @@ generated
 !**/resources/application.yml
 
 ### import.sql
-!**/src/main/resources/import.sql
+/src/main/resources/import.sql
 
 ### STS ###
 .apt_generated

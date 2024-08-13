@@ -52,6 +52,10 @@ public class UserService implements UserDetailsService {
         return userRepository.save(userEntity);
     }
 
+    public UserEntity findByIdx(Long idx) {
+        return userRepository.findById(idx).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+    }
+
     public UserEntity findByUserId(String userId) {
         return userRepository.findByUserId(userId).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
     }
