@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,9 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final BoardRepository boardRepository;
 
+    /**
+     * 댓글 생성
+     */
     public Comment createComment(CommentDto commentDto) {
         BoardEntity board = boardRepository.findById(commentDto.getBoardId())
                 .orElseThrow(BoardNotFoundException::new);
@@ -33,6 +37,9 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
+    /**
+     * 게시글 별로 댓글 가져오기
+     */
     public List<CommentDto> getCommentsByBoard(Long boardId) {
         BoardEntity board = boardRepository.findById(boardId)
                 .orElseThrow(BoardNotFoundException::new);
@@ -43,7 +50,7 @@ public class CommentService {
                         .boardId(boardId)
                         .author(comment.getAuthor())
                         .content(comment.getContent())
-                        .createdAt(comment.getCreatedAt().toString())
+                        .createdAt(comment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
                         .build())
                 .collect(Collectors.toList());
     }

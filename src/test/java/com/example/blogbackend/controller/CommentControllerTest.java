@@ -14,6 +14,7 @@ import com.example.blogbackend.service.CategoryService;
 import com.example.blogbackend.service.CommentService;
 import com.example.blogbackend.service.UserService;
 import com.example.blogbackend.util.JwtUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import org.junit.jupiter.api.*;
@@ -49,8 +50,9 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -143,6 +145,40 @@ class CommentControllerTest {
     }
 
     @Test
-    void getCommentsByBoard() {
+    void getCommentsByBoard() throws Exception {
+        // Step 1: Create a mock post and associated comments
+        BoardEntity mockBoard = BoardEntity.builder()
+                .idx(1L)
+                .title("Test Post")
+                .author("admin01")
+                .contents("Test Contents")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        List<CommentDto> commentList = List.of(
+                CommentDto.builder().id(1L).boardId(mockBoard.getIdx()).author("user1").content("Comment 1").createdAt(LocalDateTime.now().toString()).build(),
+                CommentDto.builder().id(2L).boardId(mockBoard.getIdx()).author("user2").content("Comment 2").createdAt(LocalDateTime.now().toString()).build()
+        );
+
+        // Step 2: Mock the service to return the comment list
+        when(commentService.getCommentsByBoard(any(Long.class))).thenReturn(commentList);
+
+        // Step 3: Perform the request using MockMvc
+        ResultActions result = mockMvc.perform(get("/comment/board/{boardId}", 1L)
+                .contentType(MediaType.APPLICATION_JSON));
+
+        // Step 4: Verify the results
+        MvcResult mvcResult = result.andExpect(status().isOk())
+                .andDo(print())
+                .andReturn();
+
+        // Convert the response JSON to a List of CommentDto objects
+        String responseContent = mvcResult.getResponse().getContentAsString();
+        List<CommentDto> returnedComments = new ObjectMapper().readValue(responseContent, new TypeReference<List<CommentDto>>() {});
+
+        // Use assertions to verify the response
+        assertEquals(2, returnedComments.size());
+        assertEquals("Comment 1", returnedComments.get(0).getContent());
+        assertEquals("Comment 2", returnedComments.get(1).getContent());
     }
 }
