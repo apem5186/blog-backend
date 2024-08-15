@@ -4,6 +4,8 @@ import com.example.blogbackend.dto.CommentDto;
 import com.example.blogbackend.entity.BoardEntity;
 import com.example.blogbackend.entity.Comment;
 import com.example.blogbackend.exception.BoardNotFoundException;
+import com.example.blogbackend.exception.CommentNotFoundException;
+import com.example.blogbackend.exception.UsernameNotEqualException;
 import com.example.blogbackend.repository.BoardRepository;
 import com.example.blogbackend.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +55,28 @@ public class CommentService {
                         .createdAt(comment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 댓글 지우기
+     */
+    public void deleteComment(String commentId, String username) {
+        Comment comment = commentRepository.findById(Long.valueOf(commentId)).orElseThrow(CommentNotFoundException::new);
+        if (!comment.getAuthor().equals(username)) {
+            throw new UsernameNotEqualException();
+        }
+        commentRepository.delete(comment);
+    }
+
+    /**
+     * 댓글 수정
+     */
+    public Comment updateComment(CommentDto commentDto) {
+        Comment comment = commentRepository.findById(commentDto.getId()).orElseThrow(CommentNotFoundException::new);
+        if (!comment.getAuthor().equals(commentDto.getAuthor())) {
+            throw new UsernameNotEqualException();
+        }
+        comment.setContent(commentDto.getContent());
+        return commentRepository.save(comment);
     }
 }

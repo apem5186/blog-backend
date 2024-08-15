@@ -5,6 +5,8 @@ import com.example.blogbackend.entity.BoardEntity;
 import com.example.blogbackend.entity.Comment;
 import com.example.blogbackend.entity.UserEntity;
 import com.example.blogbackend.entity.model.Category;
+import com.example.blogbackend.exception.CommentNotFoundException;
+import com.example.blogbackend.exception.UsernameNotEqualException;
 import com.example.blogbackend.repository.BoardRepository;
 import com.example.blogbackend.repository.CategoryRepository;
 import com.example.blogbackend.repository.CommentRepository;
@@ -31,7 +33,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -51,9 +56,8 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,6 +68,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestPropertySource(properties = {
+        "jwt.secret=AHEFIOENAFLDFHEUFHOOOEAFHHFAHEILHFAIEH@!@#HN!#LH!@",
+        "jwt.expiration=3600"
+})
 class CommentControllerTest {
 
     @Autowired
@@ -78,6 +86,11 @@ class CommentControllerTest {
     @MockBean
     private CommentService commentService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+    @Autowired
+    private WebApplicationContext webApplicationContext;
+
     @Mock
     private ObjectMapper objectMapper;
 
@@ -85,9 +98,13 @@ class CommentControllerTest {
     private BoardEntity board;
     private Category category;
     private Comment comment;
+    private String jwtToken;
 
     @BeforeEach
     void setUp() {
+        this.mockMvc = MockMvcBuilders
+                .webAppContextSetup(this.webApplicationContext)
+                .build();
         user = new UserEntity();
         user.setIdx(1L);
         user.setUserName("admin_user");
@@ -116,6 +133,18 @@ class CommentControllerTest {
         comment.setAuthor("admin01");
         comment.setCreatedAt(LocalDateTime.parse("2024-08-05T17:15:32", DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         comment.setBoardEntity(board);
+
+        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                .username(user.getUserId())
+                .password(user.getUserPw())
+                .roles("ADMIN")
+                .build();
+
+        when(userService.loadUserByUsername("admin01")).thenReturn(userDetails);
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user, "1234");
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        jwtToken = jwtUtil.createToken(userDetails, user.getUserName());
     }
 
     @DisplayName("1. 댓글 생성 테스트")
@@ -144,6 +173,7 @@ class CommentControllerTest {
         System.out.println("mvcResult : " + mvcResult.getResponse().getContentAsString());
     }
 
+    @DisplayName("2. 댓글 가져오기 테스트")
     @Test
     void getCommentsByBoard() throws Exception {
         // Step 1: Create a mock post and associated comments
@@ -180,5 +210,85 @@ class CommentControllerTest {
         assertEquals(2, returnedComments.size());
         assertEquals("Comment 1", returnedComments.get(0).getContent());
         assertEquals("Comment 2", returnedComments.get(1).getContent());
+    }
+
+    @DisplayName("3. 댓글이 정상적으로 삭제되는지 확인")
+    @WithMockUser(username = "admin_user", roles = {"ADMIN"})
+    @Test
+    void testDeleteCommentSuccess() throws Exception {
+        ResultActions result = mockMvc.perform(delete("/comment/delete")
+                        .param("commentId", "1")
+                        .param("username", "admin_user")
+                        .header("Authorization", "Bearer " + jwtToken));
+
+        verify(commentService).deleteComment("1", "admin_user");
+
+        MvcResult mvcResult = result.andDo(print())
+                        .andExpect(status().isOk())
+                        .andReturn();
+    }
+
+    @DisplayName("4. 댓글 삭제 시 댓글이 없을 때 CommentNotFoundException 실행 확인")
+    @WithMockUser(username = "admin_user", roles = {"ADMIN"})
+    @Test
+    void testDeleteCommentNotFoundException() throws Exception {
+        doThrow(new CommentNotFoundException()).when(commentService).deleteComment(anyString(), anyString());
+
+        mockMvc.perform(delete("/comment/delete")
+                        .param("commentId", "2")
+                        .param("username", "admin_user")
+                        .header("Authorization", "Bearer " + jwtToken))
+                .andExpect(status().isNotFound())
+                .andDo(print())
+                .andReturn();
+    }
+
+    @DisplayName("5. 댓글 삭제 시 작성자와 사용자가 일치하지 않을 때 UsernameNotEqualException 발생 확인")
+    @WithMockUser(username = "test_user", roles = {"USER"})
+    @Test
+    void testDeleteCommentUsernameNotEqualException() throws Exception {
+        doThrow(new UsernameNotEqualException()).when(commentService).deleteComment(anyString(), anyString());
+
+        mockMvc.perform(delete("/comment/delete")
+                        .param("commentId", "1")
+                        .param("username", "test_user")
+                        .header("Authorization", "Bearer " + jwtToken))
+                .andExpect(status().isForbidden())
+                .andDo(print())
+                .andReturn();
+    }
+
+
+    @DisplayName("6. 댓글 수정")
+    @WithMockUser(username = "admin_user", roles = {"ADMIN"})
+    @Test
+    void testUpdateComment() throws Exception {
+        Comment comment = Comment.builder()
+                .id(1L)
+                .author("admin01")
+                .content("Updated Content")
+                .boardEntity(board)
+                .createdAt(LocalDateTime.parse("2024-08-05T17:15:32", DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .build();
+
+        CommentDto updatedComment = CommentDto.builder()
+                .id(1L)
+                .author("admin01")
+                .content("Updated Content")
+                .build();
+
+        when(commentService.updateComment(any(CommentDto.class)))
+                .thenReturn(comment);
+
+        ResultActions result = mockMvc.perform(patch("/comment/update")
+                .header("Authorization", "Bearer " + jwtToken)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(new Gson().toJson(updatedComment)));
+
+        MvcResult mvcResult = result.andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+
+        System.out.println(mvcResult.getResponse().getContentAsString());
     }
 }
