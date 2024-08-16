@@ -46,7 +46,7 @@ public class CommentService {
         BoardEntity board = boardRepository.findById(boardId)
                 .orElseThrow(BoardNotFoundException::new);
 
-        return commentRepository.findByBoardEntity(board).stream()
+        return commentRepository.findByBoardEntityOrderByCreatedAt(board).stream()
                 .map(comment -> CommentDto.builder()
                         .id(comment.getId())
                         .boardId(boardId)
