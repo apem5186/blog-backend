@@ -1,11 +1,13 @@
 package com.example.blogbackend.controller;
 
 import com.example.blogbackend.dto.CommentDto;
+import com.example.blogbackend.dto.ProfileCommentDto;
 import com.example.blogbackend.entity.Comment;
 import com.example.blogbackend.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +30,12 @@ public class CommentController {
     @GetMapping("/board/{boardId}")
     public ResponseEntity<List<CommentDto>> getCommentsByBoard(@PathVariable("boardId") Long boardId) {
         List<CommentDto> comments = commentService.getCommentsByBoard(boardId);
+        return ResponseEntity.ok(comments);
+    }
+
+    @GetMapping("/comments")
+    public ResponseEntity<Page<ProfileCommentDto>> getComments(Pageable pageable) {
+        Page<ProfileCommentDto> comments = commentService.getComments(pageable);
         return ResponseEntity.ok(comments);
     }
 

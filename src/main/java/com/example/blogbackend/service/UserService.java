@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -62,5 +63,9 @@ public class UserService implements UserDetailsService {
 
     public String findUserNameByUserId(String userId) {
         return userRepository.findByUserId(userId).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다.")).getUserName();
+    }
+
+    public Long findUserIdxByUserId(String userId) {
+        return userRepository.findByUserId(userId).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다.")).getIdx();
     }
 }

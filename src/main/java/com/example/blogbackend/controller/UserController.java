@@ -43,10 +43,11 @@ public class UserController {
         SecurityContextHolder.getContext().setAuthentication(authentication);   // 검증 통과 후 accessToken 생성
 
         String username = userService.findUserNameByUserId(loginUser.getUsername());
-
+        Long userIdx = userService.findUserIdxByUserId(loginUser.getUsername());
         String accessToken = jwtUtil.createToken(loginUser, username); // accessToken 생성
 
         Map<String, Object> result = new HashMap<>();
+        result.put("user_idx", userIdx);
         result.put("user_id", loginUser.getUsername());
         result.put("user_name", username);
         result.put("user_token", accessToken);

@@ -1,3 +1,10 @@
+logging:
+  level:
+    org:
+      springframework:
+        web: DEBUG
+        boot: DEBUG
+
 server:
   port: 8081
   servlet:

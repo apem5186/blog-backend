@@ -1,6 +1,7 @@
 package com.example.blogbackend.service;
 
 import com.example.blogbackend.dto.CommentDto;
+import com.example.blogbackend.dto.ProfileCommentDto;
 import com.example.blogbackend.entity.BoardEntity;
 import com.example.blogbackend.entity.Comment;
 import com.example.blogbackend.exception.BoardNotFoundException;
@@ -9,7 +10,10 @@ import com.example.blogbackend.exception.UsernameNotEqualException;
 import com.example.blogbackend.repository.BoardRepository;
 import com.example.blogbackend.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -55,6 +59,23 @@ public class CommentService {
                         .createdAt(comment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 댓글 가져오기 (Pagination 적용)
+     */
+    @Transactional(readOnly = true)
+    public Page<ProfileCommentDto> getComments(Pageable pageable) {
+        return commentRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(comment -> ProfileCommentDto.builder()
+                        .id(comment.getId())
+                        .boardId(comment.getBoardEntity().getIdx())
+                        .boardTitle(comment.getBoardEntity().getTitle())
+                        .boardCategory(comment.getBoardEntity().getCategory().getName())
+                        .author(comment.getAuthor())
+                        .content(comment.getContent())
+                        .createdAt(comment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
+                        .build());
     }
 
     /**
