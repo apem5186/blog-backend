@@ -25,10 +25,19 @@ public class BoardEntity {
     private String author;
     private LocalDateTime createdAt;
 
+    @Column(nullable = false, columnDefinition = "bigint default 0")
+    private Long viewCount;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
 
     @OneToMany(mappedBy = "boardEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
+
+    @PrePersist
+    protected void onCreate() {
+        this.viewCount = 0L;
+        this.createdAt = LocalDateTime.now();
+    }
 }

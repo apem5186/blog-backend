@@ -29,15 +29,16 @@ public class TokenRequestFilter extends OncePerRequestFilter {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
-    private static final
-    List<AntPathRequestMatcher> ALLOWED_REQUESTS = Arrays.asList(
+    private static final List<AntPathRequestMatcher> ALLOWED_REQUESTS = Arrays.asList(
             new AntPathRequestMatcher("/user/login", RequestMethod.POST),
             new AntPathRequestMatcher("/user/save", RequestMethod.POST),
             new AntPathRequestMatcher("/board/**", RequestMethod.GET),
             new AntPathRequestMatcher("/total-boards", RequestMethod.GET),
             new AntPathRequestMatcher("/board-count-by-category", RequestMethod.GET),
             new AntPathRequestMatcher("/comment", RequestMethod.POST),
-            new AntPathRequestMatcher("/comment/**", RequestMethod.GET)
+            new AntPathRequestMatcher("/comment/**", RequestMethod.GET),
+            new AntPathRequestMatcher("/board/**/view-count", RequestMethod.GET),
+            new AntPathRequestMatcher("/board/**/view", RequestMethod.POST)
     );
 
     @Override
@@ -48,30 +49,21 @@ public class TokenRequestFilter extends OncePerRequestFilter {
             boolean isAllowed = ALLOWED_REQUESTS.stream().anyMatch(matcher -> matcher.match(request));
 
             log.info("Request URI: {}", requestURI);
+
+            String token = parseJwt(request);
+
             if (isAllowed) {
-                log.info("실행");
+                if (token != null) {
+                    authenticateToken(request, token);
+                }
                 doFilter(request, response, filterChain);
             } else {
-                String token = parseJwt(request);
                 if (token == null) {
                     log.info("토큰없음");
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
                 } else {
-                    DecodedJWT tokenInfo = jwtUtil.decodeToken(token);
-                    if (tokenInfo != null) {
-                        String userId = tokenInfo.getSubject();
-                        UserDetails loginUser = userService.loadUserByUsername(userId);
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                loginUser, null, loginUser.getAuthorities()
-                        );
-
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                        doFilter(request, response, filterChain);
-                    } else {
-                        log.error("### TokenInfo is Null");
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                    }
+                    authenticateToken(request, token);
+                    doFilter(request, response, filterChain);
                 }
             }
         } catch (TokenExpiredException e) {
@@ -80,6 +72,23 @@ public class TokenRequestFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             log.error("### Filter Exception {}", e.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+        }
+    }
+
+    private void authenticateToken(HttpServletRequest request, String token) {
+        DecodedJWT tokenInfo = jwtUtil.decodeToken(token);
+        if (tokenInfo != null) {
+            String userId = tokenInfo.getSubject();
+            UserDetails loginUser = userService.loadUserByUsername(userId);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    loginUser, null, loginUser.getAuthorities()
+            );
+
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } else {
+            log.error("### TokenInfo is Null");
+            throw new RuntimeException("Unauthorized");
         }
     }
 

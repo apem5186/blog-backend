@@ -1,7 +1,9 @@
 package com.example.blogbackend.service;
 
 import com.example.blogbackend.dto.BoardDto;
+import com.example.blogbackend.dto.LikeDto;
 import com.example.blogbackend.entity.BoardEntity;
+import com.example.blogbackend.entity.UserEntity;
 import com.example.blogbackend.entity.model.Category;
 import com.example.blogbackend.entity.model.SearchCondition;
 import com.example.blogbackend.exception.BoardNotFoundException;
@@ -10,11 +12,16 @@ import com.example.blogbackend.entity.model.Pagination;
 import com.example.blogbackend.repository.BoardRepository;
 import com.example.blogbackend.repository.BoardRepositoryCustom;
 import com.example.blogbackend.repository.CategoryRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,21 +39,42 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardRepositoryCustom boardRepositoryCustom;
     private final CategoryRepository categoryRepository;
+    private final LikeService likeService;
+    private final UserService userService;
 
     /**
      * 게시글 목록 가져오기
      */
     public Header<List<BoardDto>> getBoardList(Pageable pageable, SearchCondition searchCondition) {
         List<BoardDto> dtos = new ArrayList<>();
-
         Page<BoardEntity> boardList = boardRepositoryCustom.findAllBySearchCondition(pageable, searchCondition);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = null;
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            UserEntity userEntity = userService.findByUserId(userDetails.getUsername());
+            userId = userEntity.getIdx();
+        }
         for (BoardEntity boardEntity : boardList) {
+            Long likeCount = likeService.getLikeCount(boardEntity.getIdx());
+            boolean isLiked = false;
+            if (userId != null) {
+                LikeDto likeDto = LikeDto.builder()
+                        .boardId(boardEntity.getIdx())
+                        .userId(userId)
+                        .build();
+                isLiked = likeService.getStateCheck(likeDto);
+            }
             BoardDto dto = BoardDto.builder()
                     .idx(boardEntity.getIdx())
                     .author(boardEntity.getAuthor())
                     .title(boardEntity.getTitle())
                     .contents(boardEntity.getContents())
                     .category(boardEntity.getCategory())
+                    .isLiked(isLiked)
+                    .likeCount(likeCount)
+                    .viewCount(boardEntity.getViewCount())
                     .createdAt(boardEntity.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
                     .build();
 
@@ -119,6 +147,25 @@ public class BoardService {
     public void delete(Long id) {
         BoardEntity boardEntity = boardRepository.findById(id).orElseThrow(BoardNotFoundException::new);
         boardRepository.delete(boardEntity);
+    }
+
+    /**
+     * 게시글 조회수 증가
+     */
+    @Transactional
+    public void incrementViewCount(Long boardId) {
+        BoardEntity board = findById(boardId);
+
+        board.setViewCount(board.getViewCount() + 1);
+        boardRepository.save(board);
+    }
+
+    /**
+     * 게시글 조회수 리턴
+     */
+    public Long getViewCount(Long boardId) {
+        BoardEntity board = findById(boardId);
+        return board.getViewCount();
     }
 
     /**

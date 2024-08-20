@@ -21,4 +21,7 @@ public class BoardDto implements Serializable {
     private Long categoryId;
     private String createdAt;
     private Category category;
+    private boolean isLiked;
+    private Long viewCount;
+    private Long likeCount;
 }

@@ -32,7 +32,9 @@ public class BoardController {
     public Header<List<BoardDto>> boardList(
             @PageableDefault(sort = {"idx"}) Pageable pageable,
             SearchCondition searchCondition
-            ) { return boardService.getBoardList(pageable, searchCondition); }
+            ) {
+        return boardService.getBoardList(pageable, searchCondition);
+    }
 
     @GetMapping("/board/{id}")
     public BoardDto getBoard(@PathVariable("id") Long id) { return boardService.getBoard(id); }
@@ -57,6 +59,18 @@ public class BoardController {
 
     @DeleteMapping("/board/{id}")
     public void delete(@PathVariable("id") Long id) { boardService.delete(id); }
+
+    @PostMapping("/board/{boardId}/view")
+    public ResponseEntity<Void> incrementViewCount(@PathVariable("boardId") Long boardId) {
+        boardService.incrementViewCount(boardId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/board/{boardId}/view-count")
+    public ResponseEntity<Long> getViewCount(@PathVariable("boardId") Long boardId) {
+        Long viewCount = boardService.getViewCount(boardId);
+        return ResponseEntity.ok(viewCount);
+    }
 
     @GetMapping("/board-count-by-category")
     public ResponseEntity<Map<String, Long>> getBoardsCountByCategory() {
