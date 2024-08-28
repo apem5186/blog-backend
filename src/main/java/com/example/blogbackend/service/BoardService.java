@@ -12,6 +12,7 @@ import com.example.blogbackend.entity.model.Pagination;
 import com.example.blogbackend.repository.BoardRepository;
 import com.example.blogbackend.repository.BoardRepositoryCustom;
 import com.example.blogbackend.repository.CategoryRepository;
+import com.example.blogbackend.repository.LikeRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final BoardRepositoryCustom boardRepositoryCustom;
     private final CategoryRepository categoryRepository;
+    private final LikeRepository likeRepository;
     private final LikeService likeService;
     private final UserService userService;
 
@@ -91,6 +93,48 @@ public class BoardService {
         return Header.OK(dtos, pagination);
     }
 
+
+    /**
+     * 좋아요한 게시글 가져오기
+     */
+    public Header<List<BoardDto>> getLikedBoardList(Long userId, Pageable pageable) {
+        List<BoardDto> dtos = new ArrayList<>();
+        Page<BoardEntity> boardList = likeRepository.findLikedBoardsByUserId(userId, pageable);
+
+        for (BoardEntity boardEntity : boardList) {
+            Long likeCount = likeService.getLikeCount(boardEntity.getIdx());
+            boolean isLiked = false;
+            if (userId != null) {
+                LikeDto likeDto = LikeDto.builder()
+                        .boardId(boardEntity.getIdx())
+                        .userId(userId)
+                        .build();
+                isLiked = likeService.getStateCheck(likeDto);
+            }
+            BoardDto dto = BoardDto.builder()
+                    .idx(boardEntity.getIdx())
+                    .author(boardEntity.getAuthor())
+                    .title(boardEntity.getTitle())
+                    .contents(boardEntity.getContents())
+                    .category(boardEntity.getCategory())
+                    .isLiked(isLiked)
+                    .likeCount(likeCount)
+                    .viewCount(boardEntity.getViewCount())
+                    .createdAt(boardEntity.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
+                    .build();
+
+            dtos.add(dto);
+        }
+
+        Pagination pagination = new Pagination(
+                (int) boardList.getTotalElements(),
+                pageable.getPageNumber() + 1,
+                pageable.getPageSize(),
+                10
+        );
+
+        return Header.OK(dtos, pagination);
+    }
 
 
     /**

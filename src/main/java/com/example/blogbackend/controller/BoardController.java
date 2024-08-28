@@ -36,6 +36,12 @@ public class BoardController {
         return boardService.getBoardList(pageable, searchCondition);
     }
 
+    @GetMapping("/board/liked")
+    public Header<List<BoardDto>> likedBoardList(
+            @PageableDefault(sort = {"id"}) Pageable pageable, @RequestParam(value = "userId") String userId) {
+        return boardService.getLikedBoardList(Long.valueOf(userId), pageable);
+    }
+
     @GetMapping("/board/{id}")
     public BoardDto getBoard(@PathVariable("id") Long id) { return boardService.getBoard(id); }
 

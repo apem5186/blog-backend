@@ -79,6 +79,23 @@ public class CommentService {
     }
 
     /**
+     * Username별로 댓글 가져오기(Pagination 적용)
+     */
+    @Transactional(readOnly = true)
+    public Page<ProfileCommentDto> getCommentsByUsername(Pageable pageable, String username) {
+        return commentRepository.findByAuthorOrderByCreatedAtDesc(pageable, username)
+                .map(comment -> ProfileCommentDto.builder()
+                        .id(comment.getId())
+                        .boardId(comment.getBoardEntity().getIdx())
+                        .boardTitle(comment.getBoardEntity().getTitle())
+                        .boardCategory(comment.getBoardEntity().getCategory().getName())
+                        .author(comment.getAuthor())
+                        .content(comment.getContent())
+                        .createdAt(comment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss")))
+                        .build());
+    }
+
+    /**
      * 댓글 지우기
      */
     public void deleteComment(String commentId, String username) {

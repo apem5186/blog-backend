@@ -39,6 +39,13 @@ public class CommentController {
         return ResponseEntity.ok(comments);
     }
 
+    @GetMapping("/comments/{author}")
+    public ResponseEntity<Page<ProfileCommentDto>> getCommentsByUsername(@PathVariable("author") String author,
+                                                                         Pageable pageable) {
+        Page<ProfileCommentDto> comments = commentService.getCommentsByUsername(pageable, author);
+        return ResponseEntity.ok(comments);
+    }
+
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteComment(
             @RequestParam(value = "commentId") String commentId,

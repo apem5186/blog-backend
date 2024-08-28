@@ -35,6 +35,9 @@ public class BoardEntity {
     @OneToMany(mappedBy = "boardEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 
+    @OneToMany(mappedBy = "boardEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes;
+
     @PrePersist
     protected void onCreate() {
         this.viewCount = 0L;
