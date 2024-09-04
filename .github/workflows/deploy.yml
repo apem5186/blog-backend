@@ -36,13 +36,19 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-            cd /home/${{ secrets.EC2_USER }}/blog-backend
-            chmod 644 docker-compose.yml
+
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/blog-backend:latest
-            sudo docker-compose -f ./docker-compose.yml up -d
+            # Stop and remove existing containers
+            docker stop blog-backend || true
+            docker rm blog-backend || true
+            
+            # Run the Docker container with the correct name and configuration
+            docker run -d --name blog-backend -p 8081:8081 ${{ secrets.DOCKER_HUB_USERNAME }}/blog-backend:latest
+
+            # Clean up unused images
+            docker image prune -f
         env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          COMPOSE_FILE: docker-compose:yaml:docker-compose:override:yaml:docker-compose:dev:yaml
