@@ -9,6 +9,9 @@ WORKDIR /app
 # Copy all project files to the working directory
 COPY . .
 
+# Ensure gradlew has execute permissions
+RUN chmod +x ./gradlew
+
 # Clean the build to remove old/generated files
 RUN ./gradlew clean --no-daemon
 
