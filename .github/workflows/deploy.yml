@@ -36,6 +36,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
+            cd /home/${{ secrets.EC2_USER }}/blog-backend
+            chmod 644 docker-compose.yml
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/blog-backend:latest
             sudo docker-compose -f ./docker-compose.yml up -d
         env:
