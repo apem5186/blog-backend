@@ -32,12 +32,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedOrigins("*")
                 .allowedMethods(
                         HttpMethod.GET.name(),
-                        HttpMethod.PATCH.name(),
-                        HttpMethod.HEAD.name(),
-                        HttpMethod.OPTIONS.name(),
-                        HttpMethod.POST.name(),
-                        HttpMethod.DELETE.name(),
-                        HttpMethod.PUT.name()
+                        HttpMethod.OPTIONS.name()
                 );
     }
 }

@@ -8,12 +8,6 @@ group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '17'
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
-}
-
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
@@ -61,7 +55,7 @@ tasks.named('test') {
 }
 
 // * * * querydsl * * *
-def generated='src/main/generated'
+def generated='build/generated/querydsl'
 sourceSets {
 	main {
 		java {
