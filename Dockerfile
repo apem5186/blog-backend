@@ -31,4 +31,4 @@ COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8081
 
 # Run the Spring Boot application
-CMD ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+CMD ["java", "-Dspring.profiles.active=prod", "echo SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL && echo SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME && echo SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD && echo JWT_SECRET=$JWT_SECRET", "-jar", "app.jar"]
