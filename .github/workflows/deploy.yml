@@ -37,10 +37,10 @@ jobs:
           script: |
             echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/blog-backend:latest
-            
             sudo docker-compose -f ./docker-compose.yml up -d
         env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
           SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
           SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          COMPOSE_FILE: docker-compose:yaml:docker-compose:override:yaml:docker-compose:dev:yaml
