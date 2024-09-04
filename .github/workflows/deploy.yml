@@ -37,15 +37,7 @@ jobs:
           script: |
             echo ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} | docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
             docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/blog-backend:latest
-#            # Stop and remove existing containers
-#            docker stop blog-backend || true
-#            docker rm blog-backend || true
-#
-#            # Run the Docker container with the correct name and configuration
-#            docker run -d --name blog-backend -p 8081:8081 ${{ secrets.DOCKER_HUB_USERNAME }}/blog-backend:latest
-#
-#            # Clean up unused images
-#            docker image prune -f
+            
             sudo docker-compose -f ./docker-compose.yml up -d
         env:
           SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
