@@ -19,10 +19,11 @@ public class Comment {
     private Long id;
 
     @Column(nullable = false)
-    private String author;
-
-    @Column(nullable = false)
     private String content;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
@@ -34,6 +35,10 @@ public class Comment {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public String getAuthor() {
+        return user != null ? user.getUserName() : null;
     }
 
 }
