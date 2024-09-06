@@ -69,4 +69,11 @@ public class UserService implements UserDetailsService {
     public Long findUserIdxByUserId(String userId) {
         return userRepository.findByUserId(userId).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다.")).getIdx();
     }
+
+    @Transactional
+    public UserEntity updateUsername(UserDto userDto) {
+        UserEntity userEntity = userRepository.findByUserId(userDto.getUserId()).orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+        userEntity.setUserName(userDto.getUserName());
+        return userRepository.save(userEntity);
+    }
 }

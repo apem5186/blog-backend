@@ -60,5 +60,11 @@ public class UserController {
         // param이름이 snake_case가 아닐경우 null 받아옴 시발 좆병신새끼
         return userService.saveUser(userDto);
     }
+
+    @PatchMapping("/update")
+    public ResponseEntity<Void> updateUsername(@RequestBody UserDto userDto) {
+        userService.updateUsername(userDto);
+        return ResponseEntity.ok().build();
+    }
 }
 
