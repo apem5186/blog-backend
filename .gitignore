@@ -9,7 +9,8 @@ build/
 generated
 
 ### yml
-!**/resources/application.yml
+/src/resources/application.yml
+/src/resources/application-prod.yml
 
 ### import.sql
 /src/main/resources/import.sql
