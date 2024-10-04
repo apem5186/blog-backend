@@ -23,7 +23,7 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private UserEntity userEntity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id", nullable = false)
@@ -38,7 +38,7 @@ public class Comment {
     }
 
     public String getAuthor() {
-        return user != null ? user.getUserName() : null;
+        return userEntity != null ? userEntity.getUserName() : null;
     }
 
 }

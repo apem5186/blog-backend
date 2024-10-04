@@ -40,7 +40,7 @@ public class CommentService {
                 .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다."));
         Comment comment = Comment.builder()
                 .boardEntity(board)
-                .user(user)
+                .userEntity(user)
                 .content(commentDto.getContent())
                 .createdAt(LocalDateTime.now())
                 .build();
