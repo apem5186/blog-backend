@@ -57,7 +57,6 @@ public class UserController {
 
     @PostMapping("/save")
     public UserEntity save(@RequestBody UserDto userDto) {
-        // param이름이 snake_case가 아닐경우 null 받아옴 시발 좆병신새끼
         return userService.saveUser(userDto);
     }
 
